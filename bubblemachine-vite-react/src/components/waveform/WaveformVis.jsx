@@ -29,8 +29,8 @@ const ZOOM_SETTINGS = {
     pixelsPerSecond: 1,
   },
   HALF: {
-    level: 2,
-    pixelsPerSecond: 100,
+    level: 4,
+    pixelsPerSecond: 200,
   },
 };
 
