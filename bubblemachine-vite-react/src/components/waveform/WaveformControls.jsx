@@ -48,7 +48,7 @@ const WaveformControls = ({
         id="audio-file-input"
         type="file"
         style={{ display: "none" }}
-        onChange={(e) => onFileChange(e.target.files[0])}
+        onInput={(e) => onFileChange(e.target.files[0])}
       />
       <label htmlFor="audio-file-input">
         <Button variant="contained" color="primary" component="span">
