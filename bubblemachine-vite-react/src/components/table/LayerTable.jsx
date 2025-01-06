@@ -240,7 +240,7 @@ const LayerTable = ({ layer, bubbles }) => {
     enableColumnFilters: false,
     enablePagination: false,
     editDisplayMode: "row",
-    enableSorting: false,
+    enableSorting: true,
     muiTableBodyCellProps: {
       sx: { fontSize: "0.875rem" },
     },
