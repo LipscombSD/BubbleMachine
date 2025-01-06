@@ -171,9 +171,9 @@ const LayerTable = ({ layer, bubbles }) => {
   const validateBubble = (bubble) => {
     const errors = {};
 
-    if (!bubble.bubbleName?.trim()) {
+    /*if (!bubble.bubbleName?.trim()) {
       errors.bubbleName = "Name is required";
-    }
+    }*/
 
     if (!validateTimeFormat(bubble.startTime)) {
       errors.startTime = "Invalid time format (MM:SS:mmm)";

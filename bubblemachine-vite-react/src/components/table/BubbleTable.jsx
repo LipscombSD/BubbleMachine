@@ -160,6 +160,7 @@ const BubbleTable = () => {
         header: "Name",
         size: 130,
         muiEditTextFieldProps: {
+          
           size: "small",
           error: !!validationErrors?.bubbleName,
           helperText: validationErrors?.bubbleName,
@@ -250,9 +251,9 @@ const BubbleTable = () => {
 
   const validateBubble = (bubble) => {
     const errors = {};
-    if (!bubble.bubbleName?.trim()) {
+    /*if (!bubble.bubbleName?.trim()) {
       errors.bubbleName = "Name is required";
-    }
+    }*/
     if (!validateTimeFormat(bubble.startTime)) {
       errors.startTime = "Invalid time format (MM:SS:mmm)";
     }
