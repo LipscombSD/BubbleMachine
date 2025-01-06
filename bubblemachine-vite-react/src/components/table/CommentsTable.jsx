@@ -257,7 +257,7 @@ const CommentsTable = () => {
     enableColumnActions: false,
     enableColumnFilters: false,
     enablePagination: false,
-    enableSorting: false,
+    enableSorting: true,
     enableRowSelection: false,
     enableColumnOrdering: false,
     enableColumnResizing: false,
