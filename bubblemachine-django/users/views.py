@@ -108,10 +108,10 @@ class UserViewSet(GenericViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['delete'])
-    def delete_account(self, request):
-        """Soft delete user account endpoint"""
-        user = request.user
-        user.delete()  # CALLS SOFT DELETE (marks account as deleted, doesn't actually delete data)
-        logger.info(f"Account deleted for user: {user.email}")
-        return Response({'message': 'Account deleted successfully'})
+    # @action(detail=False, methods=['delete'])
+    # def delete_account(self, request):
+    #     """Soft delete user account endpoint"""
+    #     user = request.user
+    #     user.delete()  # CALLS SOFT DELETE (marks account as deleted, doesn't actually delete data)
+    #     logger.info(f"Account deleted for user: {user.email}")
+    #     return Response({'message': 'Account deleted successfully'})
