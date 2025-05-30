@@ -5,14 +5,38 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
 from django.contrib.auth import logout
 from .models import User
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, 
-    UserProfileSerializer
+    UserProfileSerializer, CustomTokenRefreshSerializer
 )
 
+
 logger = logging.getLogger(__name__)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    """Used to convert refresh/access to refresh_token/access_token"""
+    serializer_class = CustomTokenRefreshSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Get the original refresh token from request
+        refresh_token = request.data.get('refresh_token')
+
+        # Get the new access token from serializer
+        access_token = serializer.validated_data.get('access')
+
+        # Return custom response
+        return Response({
+            'access_token': str(access_token),
+            'refresh_token': refresh_token
+        }, status=status.HTTP_200_OK)
+
 
 class UserViewSet(GenericViewSet):
     """User endpoints"""
@@ -49,7 +73,7 @@ class UserViewSet(GenericViewSet):
             return Response({
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
-                'user': UserProfileSerializer(user).data
+                # 'user': UserProfileSerializer(user).data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -62,7 +86,7 @@ class UserViewSet(GenericViewSet):
                 token = RefreshToken(refresh_token)
                 token.blacklist()
             logout(request)
-            logger.info(f"User logged out: {request.user.email}")
+            logger.info(f"User logged out.")
             return Response({'message': 'Successfully logged out'})
         except Exception as e:
             logger.error(f"Logout error: {str(e)}")

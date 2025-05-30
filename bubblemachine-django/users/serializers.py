@@ -3,8 +3,24 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from .models import User, UserMetadata
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.exceptions import InvalidToken
+from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
+
+
+class CustomTokenRefreshSerializer(TokenRefreshSerializer):
+    """A serializer to allow client to pass in 'refresh_token' instead of 'token'"""
+    refresh_token = serializers.CharField(required=True)
+
+    def to_internal_value(self, data):
+        # Convert refresh_token to refresh before validation
+        if 'refresh_token' in data:
+            self._refresh_token = data['refresh_token']
+            data = data.copy()
+            data['refresh'] = data['refresh_token']
+        return super().to_internal_value(data)
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
