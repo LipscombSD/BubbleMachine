@@ -6,7 +6,6 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
-from django.contrib.auth import logout
 from .models import User
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, 
@@ -76,21 +75,6 @@ class UserViewSet(GenericViewSet):
                 # 'user': UserProfileSerializer(user).data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['post'])
-    def logout(self, request):
-        """User logout endpoint"""
-        try:
-            refresh_token = request.data.get('refresh_token')
-            if refresh_token:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            logout(request)
-            logger.info(f"User logged out.")
-            return Response({'message': 'Successfully logged out'})
-        except Exception as e:
-            logger.error(f"Logout error: {str(e)}")
-            return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def profile(self, request):

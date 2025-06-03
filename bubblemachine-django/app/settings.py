@@ -47,7 +47,6 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
 ]
 
@@ -93,7 +92,8 @@ WSGI_APPLICATION = 'app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = config('DATABASE_URL', default=None)
+# TODO: Replace 'None' with 'config('DATABASE_URL', default=None)' to use docker postgres db
+DATABASE_URL = None
 
 if DATABASE_URL:
     DATABASES = {
