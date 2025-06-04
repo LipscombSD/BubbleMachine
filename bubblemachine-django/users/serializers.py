@@ -9,7 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
 
-
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
     """A serializer to allow client to pass in 'refresh_token' instead of 'token'"""
     refresh_token = serializers.CharField(required=True)
@@ -21,7 +20,6 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
             data = data.copy()
             data['refresh'] = data['refresh_token']
         return super().to_internal_value(data)
-
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """A serializer for creating new users"""
@@ -42,7 +40,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         logger.info(f"New user registered: {user.email}")
         return user
-
 
 class UserLoginSerializer(serializers.Serializer):
     """A serializer for a user logging in"""
@@ -66,10 +63,15 @@ class UserLoginSerializer(serializers.Serializer):
 
         return attrs
 
-
 class UserProfileSerializer(serializers.ModelSerializer):
     """A generic serializer for a user profile"""
+    trial_end_date = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'date_joined')
-        read_only_fields = ('id', 'email', 'date_joined')
+        fields = ('id', 'email', 'first_name', 'last_name', 'date_joined', 'trial_end_date', 'is_subscribed')
+        read_only_fields = ('id', 'email', 'date_joined', 'is_subscribed')
+
+    def get_trial_end_date(self, obj):
+        """Return trial_end_date only if user is not subscribed, else None"""
+        return None if obj.is_subscribed else obj.trial_end_date

@@ -6,15 +6,14 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework import permissions
 from .models import User
 from .serializers import (
-    UserRegistrationSerializer, UserLoginSerializer, 
+    UserRegistrationSerializer, UserLoginSerializer,
     UserProfileSerializer, CustomTokenRefreshSerializer
 )
 
-
 logger = logging.getLogger(__name__)
-
 
 class CustomTokenRefreshView(TokenRefreshView):
     """Used to convert refresh/access to refresh_token/access_token"""
@@ -36,16 +35,41 @@ class CustomTokenRefreshView(TokenRefreshView):
             'refresh_token': refresh_token
         }, status=status.HTTP_200_OK)
 
+def subscription_or_trial_permission(require_subscription=False, require_trial=False):
+    """Factory function to create a SubscriptionOrTrialPermission class"""
+    class SubscriptionOrTrialPermission(permissions.BasePermission):
+        message = (
+            "You must be subscribed and have an active trial to access this endpoint."
+            if require_subscription and require_trial
+            else "You must be subscribed to access this endpoint."
+            if require_subscription
+            else "Your trial has ended. Please subscribe to continue."
+            if require_trial
+            else "Access denied."
+        )
+
+        def has_permission(self, request, view):
+            user = request.user
+            if not user or not user.is_authenticated:
+                return False
+
+            # Superusers bypass all checks
+            if user.is_superuser:
+                return True
+
+            # Check subscription status if required
+            subscription_ok = not require_subscription or user.is_subscribed
+
+            # Check trial status if required
+            trial_ok = not require_trial or user.is_trial_active
+
+            return subscription_ok and trial_ok
+
+    return SubscriptionOrTrialPermission
 
 class UserViewSet(GenericViewSet):
     """User endpoints"""
     queryset = User.objects.all()
-
-    # Doesn't require authentication to create account / login
-    def get_permissions(self):
-        if self.action in ['register', 'login']:
-            return [AllowAny()]
-        return [IsAuthenticated()]
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
@@ -72,30 +96,29 @@ class UserViewSet(GenericViewSet):
             return Response({
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
-                # 'user': UserProfileSerializer(user).data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'])
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=[IsAuthenticated, subscription_or_trial_permission(require_trial=True)]
+    )
     def profile(self, request):
-        """Get user profile endpoint"""
+        """Get user profile endpoint (requires active trial or subscription)"""
         serializer = UserProfileSerializer(request.user)
         return Response(serializer.data)
 
-    @action(detail=False, methods=['put', 'patch'])
+    @action(
+        detail=False,
+        methods=['put', 'patch'],
+        permission_classes=[IsAuthenticated, subscription_or_trial_permission(require_subscription=True)]
+    )
     def update_profile(self, request):
-        """Update user profile endpoint"""
+        """Update user profile endpoint (requires subscription)"""
         serializer = UserProfileSerializer(request.user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             logger.info(f"Profile updated for user: {request.user.email}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    # @action(detail=False, methods=['delete'])
-    # def delete_account(self, request):
-    #     """Soft delete user account endpoint"""
-    #     user = request.user
-    #     user.delete()  # CALLS SOFT DELETE (marks account as deleted, doesn't actually delete data)
-    #     logger.info(f"Account deleted for user: {user.email}")
-    #     return Response({'message': 'Account deleted successfully'})

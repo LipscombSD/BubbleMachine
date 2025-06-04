@@ -2,6 +2,8 @@ import uuid
 import logging
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 from .managers import UserManager
 
 logger = logging.getLogger(__name__)
@@ -17,6 +19,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_deleted = models.BooleanField(default=False)  # Soft delete
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    trial_end_date = models.DateTimeField(null=True)  # Temporary null=True from previous fix
+    is_subscribed = models.BooleanField(default=False)  # New field for subscription status
 
     objects = UserManager()
 
@@ -40,10 +44,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         """Hard delete from database"""
         super().delete(using=using, keep_parents=keep_parents)
 
+    @property
+    def is_trial_active(self):
+        """Check if the user's trial is active or if they are subscribed or a superuser"""
+        if self.is_superuser or self.is_subscribed:
+            return True
+        if self.trial_end_date is None:  # Handle None case
+            logger.warning(f"User {self.email} has no trial_end_date set")
+            return False
+        return timezone.now() < self.trial_end_date
+
 class UserMetadata(models.Model):
     """Key-value store for user metadata"""
-    # I don't like having to add columns to the User table if I don't have to.
-    # This is an easy way to avoid that.
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='metadata')
     key = models.CharField(max_length=100)
