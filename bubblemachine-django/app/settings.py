@@ -22,8 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+WEBSITE_DOMAIN = config('WEBSITE_DOMAIN')
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-y5j9m2v9x5-uj(mx0uu6yw1r0v25x^t6ugj73)bqgzuec$@__%')
+
+STRIPE_API_KEY = config('STRIPE_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)

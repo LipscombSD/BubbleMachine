@@ -1,4 +1,6 @@
 import logging
+import stripe
+from django.http import HttpResponseRedirect
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -7,11 +9,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import permissions
+
+from app import settings
 from .models import User
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
     UserProfileSerializer, CustomTokenRefreshSerializer
 )
+
+stripe.api_key = settings.STRIPE_API_KEY
 
 logger = logging.getLogger(__name__)
 
@@ -122,3 +128,26 @@ class UserViewSet(GenericViewSet):
             logger.info(f"Profile updated for user: {request.user.email}")
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=False,
+        methods=['post'],
+        permission_classes=[IsAuthenticated]
+    )
+    def create_checkout_session(self, request):
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        # Provide the exact Price ID (for example, price_1234) of the product you want to sell
+                        'price': 'price_1RWkiDCIYopQMgnow3bE86e1',
+                        'quantity': 1,
+                    },
+                ],
+                mode='subscription',
+                success_url=settings.WEBSITE_DOMAIN + '?success=true',
+                cancel_url=settings.WEBSITE_DOMAIN + '?canceled=true',
+            )
+            return HttpResponseRedirect(checkout_session.url)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
