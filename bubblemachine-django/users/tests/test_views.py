@@ -1,5 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
+from django.utils import timezone
+from datetime import timedelta
 from ..models import User
 
 class UserViewSetTest(APITestCase):
@@ -38,6 +40,46 @@ class UserViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], 'test@example.com')
 
+    # New tests for profile endpoint
+    def test_profile_subscribed_user(self):
+        user = User.objects.create_user(email='sub@example.com', password='Password123!')
+        user.is_subscribed = True
+        user.save()
+        self.client.force_authenticate(user=user)
+        response = self.client.get('/api/v1/users/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], 'sub@example.com')
+
+    def test_profile_active_trial(self):
+        user = User.objects.create_user(email='trial@example.com', password='Password123!')
+        self.client.force_authenticate(user=user)
+        response = self.client.get('/api/v1/users/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], 'trial@example.com')
+
+    def test_profile_expired_trial(self):
+        user = User.objects.create_user(email='expired@example.com', password='Password123!')
+        user.trial_end_date = timezone.now() - timedelta(days=1)
+        user.save()
+        self.client.force_authenticate(user=user)
+        response = self.client.get('/api/v1/users/profile/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_profile_no_trial_date(self):
+        user = User.objects.create_user(email='notrial@example.com', password='Password123!')
+        user.trial_end_date = None
+        user.save()
+        self.client.force_authenticate(user=user)
+        response = self.client.get('/api/v1/users/profile/')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_profile_superuser(self):
+        user = User.objects.create_superuser(email='super@example.com', password='Password123!')
+        self.client.force_authenticate(user=user)
+        response = self.client.get('/api/v1/users/profile/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['email'], 'super@example.com')
+
     def test_update_profile(self):
         user = User.objects.create_user(email='test@example.com', password='Password123!')
         self.client.force_authenticate(user=user)
@@ -46,6 +88,40 @@ class UserViewSetTest(APITestCase):
             'first_name': 'Updated'
         }
         response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)  # Fails because not subscribed
+
+    # New tests for update_profile endpoint
+    def test_update_profile_subscribed_user(self):
+        user = User.objects.create_user(email='sub@example.com', password='Password123!')
+        user.is_subscribed = True
+        user.save()
+        self.client.force_authenticate(user=user)
+        data = {'first_name': 'Updated'}
+        response = self.client.patch('/api/v1/users/update_profile/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['first_name'], 'Updated')
+
+    def test_update_profile_active_trial(self):
+        user = User.objects.create_user(email='trial@example.com', password='Password123!')
+        self.client.force_authenticate(user=user)
+        data = {'first_name': 'Updated'}
+        response = self.client.patch('/api/v1/users/update_profile/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_profile_expired_trial(self):
+        user = User.objects.create_user(email='expired@example.com', password='Password123!')
+        user.trial_end_date = timezone.now() - timedelta(days=1)
+        user.save()
+        self.client.force_authenticate(user=user)
+        data = {'first_name': 'Updated'}
+        response = self.client.patch('/api/v1/users/update_profile/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_profile_superuser(self):
+        user = User.objects.create_superuser(email='super@example.com', password='Password123!')
+        self.client.force_authenticate(user=user)
+        data = {'first_name': 'Updated'}
+        response = self.client.patch('/api/v1/users/update_profile/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['first_name'], 'Updated')
 

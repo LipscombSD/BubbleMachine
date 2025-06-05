@@ -58,3 +58,18 @@ class UserProfileSerializerTest(TestCase):
         self.assertEqual(data['email'], 'test@example.com')
         self.assertIn('first_name', data)
         self.assertIn('last_name', data)
+
+    # New tests for trial_end_date and is_subscribed
+    def test_serialize_user_not_subscribed(self):
+        serializer = UserProfileSerializer(self.user)
+        data = serializer.data
+        self.assertFalse(data['is_subscribed'])
+        self.assertIsNotNone(data['trial_end_date'])
+
+    def test_serialize_user_subscribed(self):
+        self.user.is_subscribed = True
+        self.user.save()
+        serializer = UserProfileSerializer(self.user)
+        data = serializer.data
+        self.assertTrue(data['is_subscribed'])
+        self.assertIsNone(data['trial_end_date'])
