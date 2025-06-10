@@ -17,9 +17,8 @@ from .serializers import (
     UserProfileSerializer, CustomTokenRefreshSerializer
 )
 
-stripe.api_key = settings.STRIPE_API_KEY
-
 logger = logging.getLogger(__name__)
+
 
 class CustomTokenRefreshView(TokenRefreshView):
     """Used to convert refresh/access to refresh_token/access_token"""

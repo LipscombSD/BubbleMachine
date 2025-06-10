@@ -26,6 +26,24 @@ To run tests on the users app:
 docker compose run --rm app sh -c "python3 manage.py test users.tests"
 ```
 
+## Testing Stripe
+1. Install the Stripe CLI:
+   ```bash
+   brew install stripe/stripe-cli/stripe
+   ```
+2. Login to Stripe:
+   ```bash
+   stripe login
+   ```
+3. Forward webhook to internet:
+   ```bash
+   stripe listen --forward-to localhost:8000/api/v1/payments/stripe_payment_webhook/
+   ```
+4. Mock stripe events:
+- `stripe trigger customer.subscription.created`
+- `stripe trigger customer.subscription.updated`
+- `stripe trigger customer.subscription.deleted`
+
 ## API Endpoints
 - **POST /users/register/**: Register a new user
 - **POST /users/login/**: Login and obtain JWT tokens

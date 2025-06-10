@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 class User(AbstractBaseUser, PermissionsMixin):
     """User"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
@@ -19,8 +20,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_deleted = models.BooleanField(default=False)  # Soft delete
     date_joined = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    trial_end_date = models.DateTimeField(null=True)  # Temporary null=True from previous fix
-    is_subscribed = models.BooleanField(default=False)  # New field for subscription status
+    trial_end_date = models.DateTimeField(null=True)
+    is_subscribed = models.BooleanField(default=False)
 
     objects = UserManager()
 

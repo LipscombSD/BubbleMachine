@@ -29,6 +29,8 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-y5j9m2v9x5-uj(mx0uu6y
 
 STRIPE_API_KEY = config('STRIPE_API_KEY')
 
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
@@ -56,6 +58,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     'users',
+    'payments',
     'core',
 ]
 
