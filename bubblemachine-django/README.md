@@ -38,6 +38,7 @@ docker compose run --rm app sh -c "python3 manage.py test users.tests"
 3. Forward webhook to internet:
    ```bash
    stripe listen --forward-to localhost:8000/api/v1/payments/stripe_payment_webhook/
+   # Dont forget to set STRIPE_WEBHOOK_SECRET to the provided value for testing
    ```
 4. Mock stripe events:
 - `stripe trigger customer.subscription.created`
