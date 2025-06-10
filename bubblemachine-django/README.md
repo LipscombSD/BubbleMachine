@@ -44,6 +44,14 @@ docker compose run --rm app sh -c "python3 manage.py test users.tests"
 - `stripe trigger customer.subscription.created`
 - `stripe trigger customer.subscription.updated`
 - `stripe trigger customer.subscription.deleted`
+- `stripe subscriptions cancel <sub_id>`
+
+Or mock from the checkout page:
+- Payment succeeds: 4242 4242 4242 4242  
+- Requires authentication: 4000 0025 0000 3155  
+- Payment declined: 4000 0000 0000 9995
+
+
 
 ## API Endpoints
 - **POST /users/register/**: Register a new user
