@@ -57,15 +57,18 @@ class PaymentViewSet(GenericViewSet):
     def stripe_payment_webhook(self, request):
         """Webhook to retrieve an event from stripe"""
         payload = request.body
-        event = None
+        sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+        endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
+        # Verify webhook signature
         try:
-            event = stripe.Event.construct_from(
-                json.loads(payload.decode('utf-8')), stripe.api_key
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, endpoint_secret
             )
-        except ValueError as e:
-            # Invalid payload
-            return Response({'message': str(e)}, status=400)
+        except ValueError:
+            return Response({'message': 'Invalid payload'}, status=400)
+        except stripe.error.SignatureVerificationError:
+            return Response({'message': 'Invalid signature'}, status=400)
 
         logger.info(f"Webhook '{event.type}' for event: {event.id}")
 
