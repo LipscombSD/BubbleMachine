@@ -31,6 +31,8 @@ STRIPE_API_KEY = config('STRIPE_API_KEY')
 
 STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
 
+PROXYCHECK_API_KEY = config('PROXYCHECK_API_KEY')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 

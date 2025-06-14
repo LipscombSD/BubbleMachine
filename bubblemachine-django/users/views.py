@@ -11,13 +11,32 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import permissions
 
 from app import settings
-from .models import User
+from .models import User, TrialFingerprint
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer,
     UserProfileSerializer, CustomTokenRefreshSerializer
 )
+from core.utils import is_real_ip, generate_fingerprint
 
 logger = logging.getLogger(__name__)
+
+
+def get_client_ip(request):
+    """
+    Get the client's IP address from the request.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        str: The client's IP address.
+    """
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 class CustomTokenRefreshView(TokenRefreshView):
@@ -40,8 +59,10 @@ class CustomTokenRefreshView(TokenRefreshView):
             'refresh_token': refresh_token
         }, status=status.HTTP_200_OK)
 
+
 def subscription_or_trial_permission(require_subscription=False, require_trial=False):
     """Factory function to create a SubscriptionOrTrialPermission class"""
+
     class SubscriptionOrTrialPermission(permissions.BasePermission):
         message = (
             "You must be subscribed and have an active trial to access this endpoint."
@@ -72,22 +93,61 @@ def subscription_or_trial_permission(require_subscription=False, require_trial=F
 
     return SubscriptionOrTrialPermission
 
+
 class UserViewSet(GenericViewSet):
     """User endpoints"""
     queryset = User.objects.all()
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
-        """User registration endpoint"""
+        # Get fingerprint components
+        ip = get_client_ip(request)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        email = request.data.get('email', '')
+        email_domain = email.split('@')[-1] if '@' in email else ''
+        fingerprint = generate_fingerprint(ip, user_agent, email_domain)
+
+        logger.info(
+            f"Generated fingerprint: {fingerprint} for IP: {ip}, User-Agent: {user_agent}, Email Domain: {email_domain}")
+
+        # Validate the request data
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            # Check trial fingerprint
+            try:
+                trial_fp = TrialFingerprint.objects.get(fingerprint=fingerprint)
+                logger.info(
+                    f"Found existing TrialFingerprint: {trial_fp.fingerprint}, trials_used: {trial_fp.trials_used}")
+                logger.info(f'IP: {ip}')
+
+                if trial_fp.trials_used < 2 and is_real_ip(ip):
+                    grant_trial = True
+                    trial_fp.trials_used += 1
+                    trial_fp.save()
+                    logger.info(f"Incremented trials_used to {trial_fp.trials_used}")
+                else:
+                    logger.info("Trial limit reached")
+                    # Return error response when trial limit is reached
+                    return Response({
+                        'message': 'You cannot create another account.'
+                    }, status=status.HTTP_403_FORBIDDEN)
+
+            except TrialFingerprint.DoesNotExist:
+                grant_trial = True
+                trial_fp = TrialFingerprint(fingerprint=fingerprint, trials_used=1)
+                trial_fp.save()
+                logger.info(f"Created new TrialFingerprint: {fingerprint}, trials_used: 1")
+
+            # Create the user with the appropriate trial status
+            user = serializer.save(grant_trial=grant_trial)
             refresh = RefreshToken.for_user(user)
+
             return Response({
                 'access_token': str(refresh.access_token),
                 'refresh_token': str(refresh),
                 'user': UserProfileSerializer(user).data
             }, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])

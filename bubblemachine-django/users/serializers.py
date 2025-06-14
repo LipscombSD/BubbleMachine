@@ -22,8 +22,7 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
         return super().to_internal_value(data)
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    """A serializer for creating new users"""
-    password = serializers.CharField(write_only=True, validators=[validate_password])
+    password = serializers.CharField(write_only=True)
     password_confirm = serializers.CharField(write_only=True)
 
     class Meta:
@@ -36,9 +35,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        validated_data.pop('password_confirm')
-        user = User.objects.create_user(**validated_data)
-        logger.info(f"New user registered: {user.email}")
+        grant_trial = validated_data.pop('grant_trial', True)
+        validated_data.pop('password_confirm', None)
+        user = User.objects.create_user(grant_trial=grant_trial, **validated_data)
         return user
 
 class UserLoginSerializer(serializers.Serializer):

@@ -5,12 +5,14 @@ from datetime import timedelta
 class UserManager(BaseUserManager):
     """Custom user manager"""
 
-    def create_user(self, email, password=None, **extra_fields):
+    def create_user(self, email, password=None, grant_trial=True, **extra_fields):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-        # Set trial_end_date during model initialization
-        extra_fields['trial_end_date'] = timezone.now() + timedelta(days=30)
+        if grant_trial:
+            extra_fields['trial_end_date'] = timezone.now() + timedelta(days=30)
+        else:
+            extra_fields['trial_end_date'] = None
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
