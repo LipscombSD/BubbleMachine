@@ -61,6 +61,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'users',
     'payments',
+    'bubbles',
     'core',
 ]
 
@@ -174,6 +175,8 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'core.renderers.StandardJSONRenderer',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
 }
 
 # JWT Settings
