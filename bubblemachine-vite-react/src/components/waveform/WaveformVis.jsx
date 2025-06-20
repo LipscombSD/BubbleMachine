@@ -198,7 +198,6 @@ const WaveformVis = ({
   }
 */
   const handlePlayTo = (from, to) => {
-    console.log("Playing from", from, "to", to);
     if (selectedBubble){
       if (
         !isNaN(from) && 
@@ -212,7 +211,6 @@ const WaveformVis = ({
           wavesurfer.un("timeupdate", timeUpdateHandler.current);
         }      
         const handler = (time) => {
-          console.log("Time update:", time, "from", from, "to", to);
           if (time >= to) {
             wavesurfer.pause();
             wavesurfer.un("timeupdate", handler);
@@ -220,7 +218,6 @@ const WaveformVis = ({
           }
         };
     timeUpdateHandler.current = handler;      
-
         wavesurfer.on("timeupdate", handler);
         wavesurfer.seekTo(from / wavesurfer.getDuration());
         wavesurfer.play();
@@ -242,7 +239,6 @@ const WaveformVis = ({
           document.activeElement.tagName !== "TEXTAREA"
       ) {
 
-        console.log("Key pressed:", e.code);
         const start = convertToSeconds(selectedBubble.startTime);
         const end = convertToSeconds(selectedBubble.stopTime);
         e.preventDefault();
