@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@mui/material";
 import { formatTime } from "../helpers/utils";
 // Simple timestamp display component
@@ -31,6 +32,7 @@ const WaveformControls = ({
       wavesurfer.playPause();
     }
   };
+
 
   return (
     <div

@@ -22,6 +22,7 @@ import throttle from "lodash/throttle";
 import BubbleCreator from "../table/BubbleCreator";
 import CommentCreator from "../timestamped-comments/CommentCreator";
 import useCommentsStore from "../zustand/commentsStore.jsx";
+import { use } from "react";
 
 const ZOOM_SETTINGS = {
   FULL: {
@@ -48,9 +49,11 @@ const WaveformVis = ({
   // Refs
   const waveformRef = useRef(null);
   const regionsPluginRef = useRef(null);
+  const debounceTimeout = useRef(null);
+  const timeUpdateHandler = useRef(null);
+  // State Management
   const [isCreating, setIsCreating] = useState(false);
   const [commentText, setCommentText] = useState("");
-  // State Management
   const [wavesurfer, setWavesurfer] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -185,6 +188,91 @@ const WaveformVis = ({
 
   // Basic Handlers
   const handlePlayPause = () => wavesurfer?.playPause();
+/*
+  function handleTimeUpdate(time, from, to) {
+    console.log("Time update:", time, "from", from, "to", to);
+    if (time >= to) {
+      wavesurfer.pause();
+      wavesurfer.un("timeupdate", handleTimeUpdate);
+    }
+  }
+*/
+  const handlePlayTo = (from, to) => {
+    if (selectedBubble){
+      if (
+        !isNaN(from) && 
+        !isNaN(to) &&
+        wavesurfer &&
+        from < to &&
+        from >= 0 &&
+        to <= wavesurfer.getDuration()
+      ) {
+        if (timeUpdateHandler.current) {
+          wavesurfer.un("timeupdate", timeUpdateHandler.current);
+        }      
+        const handler = (time) => {
+          if (time >= to) {
+            wavesurfer.pause();
+            wavesurfer.un("timeupdate", handler);
+            timeUpdateHandler.current = null;
+          }
+        };
+    timeUpdateHandler.current = handler;      
+        wavesurfer.on("timeupdate", handler);
+        wavesurfer.seekTo(from / wavesurfer.getDuration());
+        wavesurfer.play();
+        }
+      } else {
+        console.warn("Invalid bubble times or wavesurfer not ready:", selectedBubble);
+      }}
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (debounceTimeout.current) return;
+      if (
+        ( e.code === "Space" ||
+          e.code === "KeyJ" || 
+          e.code === "KeyK" || 
+          e.code === "KeyL" || 
+          e.code === "Semicolon") &&
+          document.activeElement.tagName !== "INPUT" &&
+          document.activeElement.tagName !== "TEXTAREA"
+      ) {
+
+        const start = convertToSeconds(selectedBubble.startTime);
+        const end = convertToSeconds(selectedBubble.stopTime);
+        e.preventDefault();
+        switch (e.code) {    
+          case "Space":
+            handlePlayPause();
+            break;             
+          case "KeyJ": 
+            handlePlayTo(start - 2, start);
+            break;
+          case "KeyK":
+            handlePlayTo(start, start + 2);
+            break;
+          case "KeyL":
+            handlePlayTo(end - 2, end); 
+            break;
+          case "Semicolon":
+            handlePlayTo(end, end + 2);
+            break;
+        }
+          debounceTimeout.current = setTimeout(() => {
+          debounceTimeout.current = null;
+        }, 300);
+      } else {
+        console.warn("No bubble selected", e.code);
+      }
+      }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, [wavesurfer, selectedBubble]);
+
 
   const handleRestart = () => {
     if (wavesurfer) {
