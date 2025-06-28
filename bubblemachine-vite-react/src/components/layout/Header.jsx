@@ -18,6 +18,8 @@ import {
 import { useTheme } from "../../styles/context/ThemeContext.jsx";
 import { headerStyles } from "../../styles/context/LayoutStyles.jsx";
 import logo from "../../assets/BubbleMachine_Transparent.png";
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/authStore";
 
 const MusicNote = ({ delay, position }) => (
   <Box
@@ -36,6 +38,8 @@ const Header = () => {
   const { darkMode, setDarkMode } = useTheme();
   const [anchorEl, setAnchorEl] = useState(null);
   const [moreAnchorEl, setMoreAnchorEl] = useState(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, logout } = useAuthStore();
   const [musicNotes] = useState(() =>
     Array.from({ length: 8 }, (_, i) => ({
       id: i,
@@ -47,10 +51,15 @@ const Header = () => {
     }))
   );
 
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+    setAnchorEl(null);
+  };
+
   return (
     <AppBar sx={headerStyles.appBar(darkMode)}>
       <Toolbar sx={headerStyles.toolbar}>
-        {/* Animated Music Notes */}
         {musicNotes.map((note) => (
           <MusicNote
             key={note.id}
@@ -58,16 +67,12 @@ const Header = () => {
             position={note.position}
           />
         ))}
-
-        {/* Logo and Brand */}
         <Box sx={headerStyles.logoContainer}>
           <img src={logo} alt="Logo" style={headerStyles.logo} />
           <Box component="span" sx={headerStyles.brandText(darkMode)}>
             BubbleMachine
           </Box>
         </Box>
-
-        {/* Navigation Controls */}
         <Box sx={headerStyles.navContainer}>
           <Tooltip
             title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
@@ -79,7 +84,6 @@ const Header = () => {
               {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
             </IconButton>
           </Tooltip>
-
           <Tooltip title="More options">
             <IconButton
               onClick={(e) => setMoreAnchorEl(e.currentTarget)}
@@ -88,30 +92,44 @@ const Header = () => {
               <MoreVertIcon />
             </IconButton>
           </Tooltip>
-
-          {/* <Tooltip title="Account settings">
-            <IconButton
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                ...headerStyles.iconButton,
-                border: "2px solid #1976d2", // Original blue border
-              }}
-            >
-              <Avatar
+          {isAuthenticated && (
+            <Tooltip title="Account settings">
+              <IconButton
+                onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{
-                  width: 32,
-                  height: 32,
-                  bgcolor: "transparent",
+                  ...headerStyles.iconButton,
+                  border: "2px solid #1976d2",
                 }}
               >
-                <AccountIcon />
-              </Avatar>
-            </IconButton>
-          </Tooltip> */}
+                <Avatar
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: "transparent",
+                  }}
+                >
+                  <AccountIcon />
+                </Avatar>
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
-
-        {/* Menus */}
-
+        {isAuthenticated && (
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+            PaperProps={{
+              sx: {
+                backgroundColor: darkMode ? "#1A1A2E" : "#FFFFFF",
+                borderRadius: "8px",
+                mt: 1,
+              },
+            }}
+          >
+            <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+          </Menu>
+        )}
         <Menu
           anchorEl={moreAnchorEl}
           open={Boolean(moreAnchorEl)}
