@@ -4,6 +4,9 @@ import { generateRandomColor } from "../../helpers/utils";
 const useBubbleStore = create((set, get) => ({
   bubbles: [],
   selectedBubble: null,
+
+  setSelectedBubble: (bubble) => set({ selectedBubble: bubble }),
+
   clearBubbles: () =>
     set({
       bubbles: [],
@@ -36,6 +39,8 @@ const useBubbleStore = create((set, get) => ({
             }
           : bubble
       );
+      set({ selectedBubble: updatedBubbles.find((bubble) => bubble.id === id) || null });
+      console.log("Selected bubble after update:", state.selectedBubble);
       return { bubbles: updatedBubbles };
     }),
 
@@ -46,7 +51,7 @@ const useBubbleStore = create((set, get) => ({
         state.selectedBubble?.id === id ? null : state.selectedBubble,
     })),
 
-  setSelectedBubble: (bubble) => set({ selectedBubble: bubble }),
+
   
   clearSelection: () => set({ selectedBubble: null }),
 

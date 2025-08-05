@@ -24,6 +24,7 @@ import CommentCreator from "../timestamped-comments/CommentCreator";
 import useCommentsStore from "../zustand/commentsStore.jsx";
 import { use } from "react";
 
+
 const ZOOM_SETTINGS = {
   FULL: {
     level: 1,
@@ -40,8 +41,6 @@ const WaveformVis = ({
   setVizWidth,
   setVisibleStartTime,
   setVisibleEndTime,
-  setSelectedBubble,
-  selectedBubble,
   setIsAudioLoaded,
   bubbleTrigger,
   audioFile,
@@ -66,6 +65,8 @@ const WaveformVis = ({
   const updateBubble = useBubbleStore((state) => state.updateBubble);
   const clearBubbles = useBubbleStore((state) => state.clearBubbles);
   const clearComments = useCommentsStore((state) => state.clearComments);
+  const setSelectedBubble = useBubbleStore((state) => state.setSelectedBubble);
+  const selectedBubble = useBubbleStore((state) => state.selectedBubble);
   const setBubbleTrigger = useBubbleStore((state) => state.setBubbleTrigger);
 
   // Region Management
@@ -188,15 +189,7 @@ const WaveformVis = ({
 
   // Basic Handlers
   const handlePlayPause = () => wavesurfer?.playPause();
-/*
-  function handleTimeUpdate(time, from, to) {
-    console.log("Time update:", time, "from", from, "to", to);
-    if (time >= to) {
-      wavesurfer.pause();
-      wavesurfer.un("timeupdate", handleTimeUpdate);
-    }
-  }
-*/
+
   const handlePlayTo = (from, to) => {
     if (selectedBubble){
       if (
@@ -224,11 +217,22 @@ const WaveformVis = ({
         }
       } else {
         console.warn("Invalid bubble times or wavesurfer not ready:", selectedBubble);
-      }}
+      }
+  }
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (debounceTimeout.current) return;
+      
+      // Get current bubble at time of keypress
+      const currentBubble = selectedBubble;
+      console.log("Current Bubble:", currentBubble);
+      console.log("Selected Bubble:", selectedBubble);
+      if (!currentBubble) {
+        console.warn("No bubble selected", e.code);
+        return;
+      }
+
       if (
         ( e.code === "Space" ||
           e.code === "KeyJ" || 
@@ -238,10 +242,10 @@ const WaveformVis = ({
           document.activeElement.tagName !== "INPUT" &&
           document.activeElement.tagName !== "TEXTAREA"
       ) {
-
         const start = convertToSeconds(selectedBubble.startTime);
         const end = convertToSeconds(selectedBubble.stopTime);
         e.preventDefault();
+        
         switch (e.code) {    
           case "Space":
             handlePlayPause();
@@ -259,19 +263,17 @@ const WaveformVis = ({
             handlePlayTo(end, end + 2);
             break;
         }
-          debounceTimeout.current = setTimeout(() => {
+        
+        debounceTimeout.current = setTimeout(() => {
           debounceTimeout.current = null;
         }, 300);
-      } else {
-        console.warn("No bubble selected", e.code);
       }
-      }
+    };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-    };
-  }, [wavesurfer, selectedBubble]);
+    }
+  }, [wavesurfer, selectedBubble, setSelectedBubble]);
 
 
   const handleRestart = () => {
@@ -355,6 +357,7 @@ const WaveformVis = ({
             start: convertToSeconds(bubble.startTime),
             end: convertToSeconds(bubble.stopTime),
           });
+          setSelectedBubble(bubble);
         }
       });
 

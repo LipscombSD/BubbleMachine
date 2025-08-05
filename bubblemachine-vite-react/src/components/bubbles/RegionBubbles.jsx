@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import useBubbleStore from "../zustand/bubbleStore";
 
 const RegionBubbles = ({
   wavesurfer,
@@ -9,6 +10,7 @@ const RegionBubbles = ({
   scrollLeftOffset = 0,
 }) => {
   const [bubblePositions, setBubblePositions] = useState([]);
+  const { setSelectedBubble } = useBubbleStore();
   const containerRef = useRef(null);
   const regionsRef = useRef(regions);
 
