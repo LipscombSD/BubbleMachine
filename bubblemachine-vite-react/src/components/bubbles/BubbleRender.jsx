@@ -11,11 +11,12 @@ const BubbleRender = React.memo(
     vizWidth = 800,
     visibleStartTime = 0,
     visibleEndTime = audioDuration,
-    setSelectedBubble,
+    //setSelectedBubble,
     setBubbleTrigger,
     bubbleTrigger,
     isAudioLoaded = false,
   }) => {
+    const setSelectedBubble = useBubbleStore((state) => state.setSelectedBubble);
     const bubbleData = useBubbleStore((state) => state.bubbles);
     const containerRef = useRef(null);
     const [hoveredBubble, setHoveredBubble] = useState(null);

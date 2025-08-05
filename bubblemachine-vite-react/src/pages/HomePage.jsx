@@ -10,19 +10,24 @@ import Typography from "@mui/material/Typography";
 import SecondaryHeader from "../components/layout/HomePageHeader";
 import CommentsTable from "../components/table/CommentsTable";
 import ConfirmDialog from "./ConfirmDialog";
+import useBubbleStore from "../components/zustand/bubbleStore";
+
 export default function HomePage() {
   const [audioDuration, setAudioDuration] = useState(0);
   const [vizWidth, setVizWidth] = useState(800);
   const [audioFileName, setAudioFileName] = useState("");
   const [visibleStartTime, setVisibleStartTime] = useState(0);
   const [visibleEndTime, setVisibleEndTime] = useState(0);
-  const [selectedBubble, setSelectedBubble] = useState(null);
+  //const [selectedBubble, setSelectedBubble] = useState(null);
   const [bubbleTrigger, setBubbleTrigger] = useState(0);
   const [isAudioLoaded, setIsAudioLoaded] = useState(false);
   const [wavesurfer, setWavesurfer] = useState(null);
   const [audioFile, setAudioFile] = useState(null);
   const [hasFile, setHasFile] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const setSelectedBubble = useBubbleStore((state) => state.setSelectedBubble);
+  const selectedBubble = useBubbleStore((state) => state.selectedBubble);
+
 
   // Move file handling functions here
   const handleFileChange = (e) => {
@@ -109,10 +114,10 @@ export default function HomePage() {
               setVizWidth={setVizWidth}
               setVisibleStartTime={setVisibleStartTime}
               setVisibleEndTime={setVisibleEndTime}
-              selectedBubble={selectedBubble}
+
               setAudioFileName={setAudioFileName}
               setIsAudioLoaded={setIsAudioLoaded}
-              setSelectedBubble={setSelectedBubble}
+
               parentSetWavesurfer={setWavesurfer}
               bubbleTrigger={bubbleTrigger}
               wavesurfer={wavesurfer}

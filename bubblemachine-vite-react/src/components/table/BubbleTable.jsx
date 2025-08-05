@@ -90,6 +90,7 @@ const BubbleTable = () => {
   const addBubble = useBubbleStore((state) => state.addBubble);
   const updateBubble = useBubbleStore((state) => state.updateBubble);
   const deleteBubble = useBubbleStore((state) => state.deleteBubble);
+  const setSelectedBubble = useBubbleStore((state) => state.setSelectedBubble);
 
   const handleKeyDown = useCallback((e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
@@ -295,9 +296,9 @@ const BubbleTable = () => {
       bubbleName: values.bubbleName.trim(),
       layer: values.layer || "1",
     };
-
     setValidationErrors({});
     updateBubble(values.id, updatedBubble);
+    setSelectedBubble(updatedBubble);
     table.setEditingRow(null);
   };
 
