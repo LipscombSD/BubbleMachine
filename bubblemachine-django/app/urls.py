@@ -23,5 +23,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path(API_PREFIX + 'users/', include('users.urls')),
     path(API_PREFIX + 'payments/', include('payments.urls')),
-    path(API_PREFIX + 'bubbles/', include('bubbles.urls')),
+    path(API_PREFIX + '', include('bubbles.urls')),
 ]
