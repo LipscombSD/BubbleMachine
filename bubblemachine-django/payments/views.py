@@ -45,8 +45,8 @@ class PaymentViewSet(GenericViewSet):
                     },
                 ],
                 mode='subscription',
-                success_url=settings.WEBSITE_DOMAIN + 'app/?success=true',
-                cancel_url=settings.WEBSITE_DOMAIN + 'app/?success=false',
+                success_url=settings.WEBSITE_DOMAIN + '/app/?success=true',
+                cancel_url=settings.WEBSITE_DOMAIN + '/app/?success=false',
             )
             return Response({'checkout_session_url': checkout_session.url}, status=200)
 
