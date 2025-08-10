@@ -20,6 +20,7 @@ import { headerStyles } from "../../styles/context/LayoutStyles.jsx";
 import logo from "../../assets/BubbleMachine_Transparent.png";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import api from "../../services/api.js";
 
 const MusicNote = ({ delay, position }) => (
   <Box
@@ -55,6 +56,20 @@ const Header = () => {
     logout();
     navigate("/");
     setAnchorEl(null);
+  };
+
+  const handleSubscribe = async () => {
+    try {
+      const res = await api.post('/payments/create_checkout_session/');
+      const url = res.data?.url || res.data?.data?.checkout_session_url;
+      if (!url) throw new Error('No checkout URL returned');
+      window.location.assign(url); // .replace(url) if back button shouldn't return
+    } catch (err) {
+      console.error('Error creating checkout session:', err);
+      alert('Failed to initiate subscription. Please try again.');
+    } finally {
+      setMoreAnchorEl(null);
+    }
   };
 
   return (
@@ -145,6 +160,7 @@ const Header = () => {
           <MenuItem onClick={() => setMoreAnchorEl(null)}>
             About BubbleMachine
           </MenuItem>
+          <MenuItem onClick={handleSubscribe}>Subscribe</MenuItem>
           <MenuItem onClick={() => setMoreAnchorEl(null)}>More</MenuItem>
         </Menu>
       </Toolbar>
